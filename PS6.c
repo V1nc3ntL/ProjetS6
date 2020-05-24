@@ -2,23 +2,27 @@
 FFT²
 *******************************************************************************/
 #include <stdio.h>
+#include <time.h> 
 #include <stdlib.h>
 #include <math.h>
 #define PI              3.1415927
 #define ADC_DEF         1024
-#define SMP_N       1<<16
+#define SMP_N       0x4000
 #define RE(n,b) *(n+b*2)
 #define I(n) *(n+1)
 #define IM(n,b) *(n+b*2+1)
 void
-fftf (int *sig, float *TF, int N, float *twiddles)
+fftf (short *sig, float *TF, int N, float *twiddles)
 {
   int i, j, tmp_N, k, btf, lg2 = 0;
-  int * sig_t;
+  short *sig_t;
   float tmp_r, tmp_i;
   float *mid, *twid, *base;
 
   //DFT2
+
+  for (i = N; i; i >>= 1)
+    lg2++;
 
   for (i = 0; i < N; i += 2)
     {
@@ -27,10 +31,7 @@ fftf (int *sig, float *TF, int N, float *twiddles)
       *(TF + (i << 1) + 2) = *sig_t - *(sig_t + 1);
     }
 
-  for (i = N; i >>= 1; i)
-    lg2++;
 
-  printf ("LOG 2 : %d\n", lg2);
 
   for (tmp_N = 4, i = 1; i < lg2; i++, tmp_N <<= 1)
     {
@@ -40,10 +41,10 @@ fftf (int *sig, float *TF, int N, float *twiddles)
 	  base = TF + (j << 1);
 	  mid = base + tmp_N;
 
-	  tmp_N>>=1;
+	  tmp_N >>= 1;
 
-	  k = (SMP_N) / tmp_N ;
-	  
+	  k = (SMP_N) / tmp_N;
+
 	  tmp_r = *(mid);
 	  tmp_i = I (mid);
 
@@ -51,13 +52,11 @@ fftf (int *sig, float *TF, int N, float *twiddles)
 	  *(mid) = *(base) - tmp_r;
 	  I (mid) = I (base) - tmp_i;
 	  *(base) = *(base) + tmp_r;
-	  
+
 	  for (btf = 1; btf < tmp_N; btf++)
 	    {
 	      twid = twiddles + k * btf;
 	      // Multiplication du twiddle
-		printf("\nTW : %f",*twid);
-		printf("\nTWIM %f\n",*(twid+1));
 	      tmp_r = RE (mid, btf) * *(twid) - IM (mid, btf) * I (twid);
 	      tmp_i = RE (mid, btf) * I (twid) + IM (mid, btf) ** (twid);
 
@@ -67,13 +66,10 @@ fftf (int *sig, float *TF, int N, float *twiddles)
 	      RE (base, btf) = RE (base, btf) + tmp_r;
 	      IM (base, btf) = IM (base, btf) + tmp_i;
 	      twid += k;
-
 	    }
-	    tmp_N<<=1;
-	 
+	  tmp_N <<= 1;
 	}
     }
-   
 }
 
      // Permet d'obtenir les twiddles factors
@@ -106,7 +102,7 @@ static unsigned char br_4[] = {
 int
 rv_16_rdx2 (unsigned int j)
 {
-  return ((br_4[(j & 0x000f)] << 12) |
+  return (0x0000ffff | (br_4[(j & 0x000f)] << 12) |
 	  (br_4[(j & 0x00f0) >> 4] << 8) |
 	  (br_4[(j & 0x0f00) >> 8] << 4) | (br_4[(j & 0x0f000) >> 12]));
 }
@@ -115,7 +111,7 @@ rv_16_rdx2 (unsigned int j)
 void
 rvs_16_rdx2 (int *sig)
 {
-  int i;
+  unsigned int i;
   int tm[SMP_N];
   for (i = 0; i < SMP_N; i++)
     // i renversé
@@ -129,22 +125,35 @@ rvs_16_rdx2 (int *sig)
 int
 main ()
 {
-    int i, N = 1<<14 , b = N << 1;
-  int *sig = malloc (sizeof (int) * (N));
-  //int * sig=(int*) calloc(SMP_N,sizeof(int)*SMP_N) ;
- 
-  /* Tableau de complexes de taille N*2 */
+  unsigned int i, N = SMP_N, b = N << 1;
+
+  /* Tableau de complexes de taille N */
+  // float *TF = (float *) calloc (b, sizeof (float) * b);
   float *TF = (float *) calloc (b, sizeof (float) * b);
-  float *twiddles = get_twiddles (SMP_N);
-  // Tableau renversant le tableau du signal
-  //  rvs_16_rdx2 (sig);
+  short *sig = malloc (sizeof (short) * (N));
+  float *twiddles = get_twiddles (N);
+	struct timespec now,bf;
+  if (!sig || !twiddles || !TF)
+    return 0;
 
- 	for(i=0; i < N; i++){
-		*(sig+i) = i ;
-	}
+  printf ("TF sur %d termes\n", N);
+  printf ("\n\tBesoins mémoires :");
+  printf ("\nTF :\t %d o \n", b * 4);
+  printf ("SIG : \t%d o \n", N * 2);
 
-  fftf (sig, TF, N, twiddles);
-  for (int i = 0; i < b; i += 2)
+  // Tablieau renversant le tableau du signal
+
+  for (i = 0; i < N; i++)
+    *(sig + i) = i;
+
+//  rvs_16_rdx2 (sig);
+    timespec_get( &bf, TIME_UTC );
+ 	fftf (sig, TF, N, twiddles);
+
+    timespec_get( &now, TIME_UTC );
+    printf("\nTemps écoulé : %lf ms\n" ,(now.tv_nsec-bf.tv_nsec)/1e3);
+
+  for (int i = 0; i < 8; i += 2)
     {
       printf ("R %-2.2f\t\t", *(TF + i));
       printf ("%-2.2f I\n", I (TF + i));
