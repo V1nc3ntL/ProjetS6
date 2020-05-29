@@ -1,6 +1,6 @@
 .PHONY=clean
 CC=gcc
-SOURCES=PS6.c 
+SOURCES=PS6.c bit_reversal.c fft.c
 OBJ_LIST=$(SOURCES:.c=.o)
 CFLAGS= -W -Wall
 
@@ -8,9 +8,9 @@ PS6: $(OBJ_LIST)
 	$(CC) $^ -o $@ -lm
 
 debug: $(OBJ_LIST)
-	$(CC) -g $^ -o $@
+	$(CC) -g  $^ -o $@ 
 .depend:
-	gcc -MM $(SOURCES) > $@ 
+	gcc -MM $(SOURCES) > $@  
 
 -include .depend
 
