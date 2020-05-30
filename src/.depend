@@ -1,0 +1,3 @@
+PS6.o: PS6.c bit_reversal.h fft.h
+bit_reversal.o: bit_reversal.c
+fft.o: fft.c

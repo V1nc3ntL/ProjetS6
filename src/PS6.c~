@@ -1,0 +1,128 @@
+/******************************************************************************
+			PROJET 	S6
+			FFT
+	EL-KHARROUBI 	GRAVES 	LEFEBVRE 	NEZET
+FFT : radix 2 et 4
+*******************************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
+#include "bit_reversal.h"
+#include "fft.h"
+
+#define PI 3.1415927
+#define ADC_DEF 1024
+
+
+#define SMP_N 1<<2
+
+int main (void)
+{
+
+
+  int i, N = SMP_N, b = N << 1;
+
+
+
+/* Tableau de complexes de taille N */
+
+
+  float *TF = (float *) calloc (b, sizeof (float) * b);
+
+
+  short *sig = calloc (N,sizeof (short) * (N));
+
+
+  short test[64] = {
+       	6, 13, 10, 16, 25, 14, 7, 3,
+    	37,25,63,42,13,7,5,11,
+   	5, 9, 17, 1, 2, 4, 12, 8,
+    	7,21,17,12,11,10,4,21,
+    	37,25,63,42,13,7,5,11,
+   	5, 9, 17, 1, 2, 4, 12, 8,
+       	6, 13, 10, 16, 25, 14, 7, 3,
+    	7,21,17,12,11,10,4,21,
+
+
+  };
+
+
+float *twiddles = get_twiddles (N );
+
+
+//  float *twiddles = get_twiddles_rdx4 (N);
+
+
+  struct timespec now, bf;
+
+
+  if (!sig || !twiddles || !TF){
+  printf ("Pas assez de mémoire\n");
+    return 0;
+}
+
+
+  printf ("TF sur %d termes\n", N);
+
+
+  printf ("\n\tBesoins mémoires :");
+
+
+  printf ("\nTF :\t %d o \n", b * 4);
+
+
+  printf ("SIG : \t%d o \n", N * 2);
+
+
+
+  for (i = 0; i < N; i++)
+
+
+    *(sig + i) = i;
+
+
+/*
+  rvs_16_rdx2 (sig,N);
+  timespec_get (&bf, TIME_UTC);
+ fftf_rdx2 (sig, TF, N, twiddles);
+  timespec_get (&now, TIME_UTC);
+  printf ("\nRADIX 2\nTemps écoulé :\t %lf ms\n",
+	  (now.tv_nsec - bf.tv_nsec) / 1e3);
+*/
+
+
+  timespec_get (&bf, TIME_UTC);
+
+  rvs_16_rdx4 (sig, N);
+
+  fftf_rdx4 (sig, TF, N, twiddles);
+
+  timespec_get (&now, TIME_UTC);
+
+
+  printf ("\nRADIX 4\nTemps écoulé :\t %*lf ms\n", 4,
+	  (now.tv_nsec - bf.tv_nsec) / 1e3);
+
+
+  for (i = 0; i < N; i++)
+{
+
+    if(!(i % 4) && i)
+	printf("\n");
+    printf ("%d,", sig[i]);
+}
+printf("\n");
+  for (int i = 0; i < b; i += 2)
+    {
+      printf ("%d R %+-2.2f\t\t", i / 2, *(TF + i));
+      printf ("%+-2.2f I\n",*(TF +i+1));
+    }
+  free (TF);
+  free (twiddles);
+  free (sig);
+  return 0;
+
+
+}
