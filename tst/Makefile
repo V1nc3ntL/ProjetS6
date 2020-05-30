@@ -4,7 +4,7 @@ SOURCES=test.c br_tst.c fft_tst.c
 OBJ_LIST=$(SOURCES:.c=.o)
 CFLAGS= -W -Wall
 
-PS6: $(OBJ_LIST)
+TEST: $(OBJ_LIST)
 	$(CC) $^ -o $@ -lm
 
 debug: $(OBJ_LIST)
