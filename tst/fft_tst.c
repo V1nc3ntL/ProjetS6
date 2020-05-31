@@ -16,7 +16,88 @@
 
 
 
-void fftf_rdx2 (short *sig, float *TF, int N, float *twiddles,unsigned int * cmp_add, unsigned int * cmp_mul)
+
+void
+fftf_rdx2_tst_re_im (short *sig, float *TF, int N, float *twiddles,
+		     unsigned int *cmp_add, unsigned int *cmp_mul)
+{
+
+
+  int i, j, tmp_N, k, btf, lg2 = 0;
+  short *sig_t;
+  float tmp_r, tmp_i;
+  float *mid_r, *twid, *base_r, *base_i, *mid_i, *RE = TF, *IM = TF + N;
+
+//DFT2
+
+  for (i = N; i; i >>= 1)
+    lg2++;
+
+
+
+// Toutes les DFT 2 sont effectuées avec des additions réelles
+  for (i = 0; i < N; i += 2)
+    {
+      sig_t = sig + i;
+      *(RE + i) = *sig_t + *(sig_t + 1);
+      *(RE + i + 1) = *sig_t - *(sig_t + 1);
+    }
+
+
+  for (tmp_N = 4, i = 1; i < lg2; i++, tmp_N <<= 1)
+    {
+      k = (N) / tmp_N;
+      for (j = 0; j < N; j += tmp_N)
+	{
+	  /*Adresse de X[0+j] 
+	     et de X[N/2+j]
+	   */
+	  tmp_N >>= 1;
+
+	  base_r = RE + j;
+	  mid_r = base_r + tmp_N;
+
+	  base_i = IM + j;
+	  mid_i = base_i + tmp_N;
+
+	  tmp_r = *(mid_r);
+	  tmp_i = *(mid_i);
+
+	  *(mid_i) = *(base_i) - tmp_i;
+	  *(mid_r) = *(base_r) - tmp_r;
+
+	  *(base_i) = *(base_i) + tmp_i;
+	  *(base_r) = *(base_r) + tmp_r;
+
+	  *cmp_add += 2;
+
+	  for (btf = 1; btf < tmp_N; btf++)
+	    {
+	      //W btf 
+	      twid = twiddles + k * btf;
+	      *cmp_mul += 1;
+
+	      tmp_r = *(mid_r + btf) * *(twid) - *(mid_i + btf) * I (twid);
+	      tmp_i = *(mid_r + btf) * I (twid) + *(mid_i + btf) ** (twid);
+
+	      *(mid_r + btf) = *(base_r + btf) - tmp_r;
+	      *(mid_i + btf) = *(base_i + btf) - tmp_i;
+
+	      *(base_r + btf) = *(base_r + btf) + tmp_r;
+	      *(base_i + btf) = *(base_i + btf) + tmp_i;
+
+	      *cmp_add += 2;
+
+	      twid += k;
+	    }
+	  tmp_N <<= 1;
+	}
+    }
+}
+
+void
+fftf_rdx2_tst (short *sig, float *TF, int N, float *twiddles,
+	       unsigned int *cmp_add, unsigned int *cmp_mul)
 {
 
 
@@ -62,13 +143,13 @@ void fftf_rdx2 (short *sig, float *TF, int N, float *twiddles,unsigned int * cmp
 
 	  I (base) = I (base) + tmp_i;
 	  *(base) = *(base) + tmp_r;
-	  *cmp_add+=2;
+	  *cmp_add += 2;
 
 	  for (btf = 1; btf < tmp_N; btf++)
 	    {
 	      //W btf 
 	      twid = twiddles + k * btf;
-	     *cmp_mul+=1;
+	      *cmp_mul += 1;
 
 	      tmp_r = RE (mid, btf) * *(twid) - IM (mid, btf) * I (twid);
 	      tmp_i = RE (mid, btf) * I (twid) + IM (mid, btf) ** (twid);
@@ -78,8 +159,8 @@ void fftf_rdx2 (short *sig, float *TF, int N, float *twiddles,unsigned int * cmp
 
 	      RE (base, btf) = RE (base, btf) + tmp_r;
 	      IM (base, btf) = IM (base, btf) + tmp_i;
-	      *cmp_add+=2;
-	      
+	      *cmp_add += 2;
+
 	      twid += k;
 	    }
 	  tmp_N <<= 1;
@@ -87,7 +168,9 @@ void fftf_rdx2 (short *sig, float *TF, int N, float *twiddles,unsigned int * cmp
     }
 }
 
-void fftf_rdx4 (short *sig, float *TF, int N, float *twiddles,unsigned int * cmp_add, unsigned int * cmp_mul)
+void
+fftf_rdx4_tst (short *sig, float *TF, int N, float *twiddles,
+	       unsigned int *cmp_add, unsigned int *cmp_mul)
 {
 
 
@@ -99,18 +182,17 @@ void fftf_rdx4 (short *sig, float *TF, int N, float *twiddles,unsigned int * cmp
 
   for (i = N; i; i >>= 2)
     lg4++;
-lg4--;
-	//W0
-	*TF =(float) *(sig ) + *(sig +  1) + *(sig +  2) + *(sig +  3);
-	//W1
-      	RE (TF, 1) = (float)*(sig ) - *(sig  + 2);
-      	IM (TF, 1) = (float)*(sig  + 3) - *(sig  + 1);
-	//W2
-      	RE (TF, 2) =(float)
-	*(sig ) - *(sig +  1) + *(sig  + 2) - *(sig  + 3);
-	//W3
-      	RE (TF, 3) = (float)RE (TF, 1);
-      	IM (TF, 3) = (float)*(sig +  1) - *(sig + 3);
+  lg4--;
+  //W0
+  *TF = (float) *(sig) + *(sig + 1) + *(sig + 2) + *(sig + 3);
+  //W1
+  RE (TF, 1) = (float) *(sig) - *(sig + 2);
+  IM (TF, 1) = (float) *(sig + 3) - *(sig + 1);
+  //W2
+  RE (TF, 2) = (float) *(sig) - *(sig + 1) + *(sig + 2) - *(sig + 3);
+  //W3
+  RE (TF, 3) = (float) RE (TF, 1);
+  IM (TF, 3) = (float) *(sig + 1) - *(sig + 3);
 //FFT 4
   for (i = 4; i < N; i += 4)
     {
@@ -138,8 +220,8 @@ lg4--;
       for (j = 0; j < N; j += tmp_N)
 	{
 	  //Position de FFT courante
-	  *pos = TF+ (j<<1);
-	 //  + (j *2);
+	  *pos = TF + (j << 1);
+	  //  + (j *2);
 	  //N/4 (TF*2 termes)
 	  tmp_N >>= 1;
 
@@ -147,70 +229,71 @@ lg4--;
 	  for (i = 1; i < 4; i++)
 	    pos[i] = pos[i - 1] + (tmp_N);
 	  //Calcul du premier papillon
-	  for (i = 0; i < 4; i++){
+	  for (i = 0; i < 4; i++)
+	    {
 	      RE (bf, i) = *pos[i];
-	      IM(bf,i) = I(pos[i]);
-	}
+	      IM (bf, i) = I (pos[i]);
+	    }
 
-	      //X(0) 
-	      **pos = W_0_4R (bf);
-	      I (*pos) = W_0_4I (bf);
-	      //X(N/4)
+	  //X(0) 
+	  **pos = W_0_4R (bf);
+	  I (*pos) = W_0_4I (bf);
+	  //X(N/4)
 
+	  *pos[1] = W_1_4R (bf);
+	  I (pos[1]) = W_1_4I (bf);
+
+	  //X(N/2)ne peut être obtenu par symétrie
+	  *pos[2] = W_2_4R (bf);
+	  I (pos[2]) = W_2_4I (bf);
+	  *cmp_add += 12;
+
+	  for (btf = 1; btf < tmp_N >> 1; btf++)
+	    {
+
+	      //Haut du papillon
+	      *pos = TF + (j * 2) + (btf << 1);
+	      *bf = *pos[0];
+	      I (bf) = I (pos[0]);
+	      //Récupération N/4,N/2,3N/4
+	      for (i = 1; i < 4; i++)
+		pos[i] = pos[i - 1] + (tmp_N);
+
+	      for (i = 1; i < 4; i++)
+		{
+		  twid = twiddles + (i * (btf) * k * 2);
+		  //W (i * btf) * N i/4
+		  RE (bf, i) = *pos[i] * *(twid) - I (pos[i]) * I (twid);
+		  IM (bf, i) = *pos[i] * I (twid) + I (pos[i]) ** (twid);
+		  *cmp_mul += 1;
+		}
+	      //X(4k) 
+	      *pos[0] = W_0_4R (bf);
+	      I (pos[0]) = W_0_4I (bf);
+	      //X(4k+1) 
 	      *pos[1] = W_1_4R (bf);
 	      I (pos[1]) = W_1_4I (bf);
+	      *cmp_add += 8;
+	    }
+	  //Les DFTS réelles sont symétriques
+	  *pos = TF + (j * 2) + (tmp_N << 1);
+	  for (i = 1; i < tmp_N; i++)
+	    {
+	      RE (*pos, i) = RE (*pos, -i);
+	      IM (*pos, i) = -IM (*pos, -i);
+	    }
 
-	      //X(N/2)ne peut être obtenu par symétrie
-	      *pos[2] = W_2_4R (bf);
-	      I (pos[2]) = W_2_4I (bf);
-	      *cmp_add+=12;
-
-	      for (btf = 1; btf < tmp_N >> 1; btf++)
-		{
-		    
-	  //Haut du papillon
-		  *pos = TF + (j*2) + (btf << 1);
-		  *bf = *pos[0];
-		  I (bf) = I (pos[0]);
-		  //Récupération N/4,N/2,3N/4
-		  for (i = 1; i < 4; i++)
-		    pos[i] = pos[i - 1] + (tmp_N);
-
-		  for (i = 1; i < 4; i++)
-		    {
-		      twid = twiddles + (i * (btf) * k * 2);
-		      //W (i * btf) * N i/4
-		      RE (bf, i) = *pos[i] * *(twid) - I (pos[i]) * I (twid);
-		      IM (bf, i) = *pos[i] * I (twid) + I (pos[i]) ** (twid);
-	      *cmp_mul+=1;
-		    }
-		  //X(4k) 
-		  *pos[0] = W_0_4R (bf);
-		  I (pos[0]) = W_0_4I (bf);
-		  //X(4k+1) 
-		  *pos[1] = W_1_4R (bf);
-		  I (pos[1]) = W_1_4I (bf);
-	      *cmp_add+=8;
-		}
-	      //Les DFTS réelles sont symétriques
-	      *pos = TF + (j* 2) + (tmp_N << 1);
-	      for (i = 1; i < tmp_N; i++)
-		{
-		  RE (*pos, i) = RE (*pos, -i);
-		  IM (*pos, i) = -IM (*pos, -i);
-		}
-		
-	      // N courant
-	      tmp_N <<= 1;
-		}
-    	}
+	  // N courant
+	  tmp_N <<= 1;
+	}
+    }
 }
 
 // Pour une fft sur b termes
 float *
 get_twiddles (int b)
 {
-  int ind,max = b<<1;
+  int ind, max = b << 1;
   float *twiddles = (float *) malloc (sizeof (float) * (max));
 
   for (ind = 0; ind < max; ind += 2)
@@ -221,4 +304,3 @@ get_twiddles (int b)
     }
   return twiddles;
 }
-
