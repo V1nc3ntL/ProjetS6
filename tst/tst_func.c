@@ -10,14 +10,19 @@
 #include <complex.h>
 #include <time.h>
 #include <fftw3.h>
+#include <string.h>
 #include "br_tst.h"
 #include "tst_func.h"
 #include "fft_tst.h"
 #include "fft_cmp_tst.h"
 #include "string.h"
-#define MAX 1<<14
+#include "smp_tst.h"
+#include "cmp_tf.h"
+#include "../src/fft.h"
 #define BUF_SZ 64
-#define INIT(a,b) (*a=0,*b=0)
+#define MAX_POW 14
+#define MAX 1<<MAX_POW
+#define MAX_SMP_VAL 1024
 float
 br_tst (void (*br) (short *, int), int N, short *sig, struct timespec *bf,
 	struct timespec *now)
@@ -85,26 +90,28 @@ void
 write_a_tf (int N, FILE * res)
 {
   char buf[BUF_SZ];
-  char *mess[2] =
-    { "TF sur ",
-" termes\n\t\t\tSignal\tTF\tTF complexe\tTwiddles\t\nBesoins mémoires :\t" };
-  fwrite (*mess, sizeof (char), sizeof (*mess) - 1, res);
+  char *mess[2] = { "TF sur ",
+    " termes\n\t\t\tSignal\tTF\tTF complexe\tTwiddles\t\nBesoins mémoires :\t"
+  };
+  fputs (*mess, res);
   snprintf (buf, BUF_SZ, "%d", N);
   fwrite (buf, sizeof (char), strlen (buf), res);
-  fwrite (*(mess + 1), sizeof (char), strlen (*(mess + 1)), res);
+
+  fputs (*(mess + 1), res);
   snprintf (buf, BUF_SZ, "%d", (int) (N * sizeof (short)));
   fwrite (buf, sizeof (char), strlen (buf), res);
-  fwrite ("\t", sizeof (char), 1, res);
+  fputc ('\t', res);
+
   snprintf (buf, BUF_SZ, "%d", (int) (N * sizeof (float) * 2));
   fwrite (buf, sizeof (char), strlen (buf), res);
-  fwrite ("\t", sizeof (char), 1, res);
+  fputc ('\t', res);
   snprintf (buf, BUF_SZ, "%d", (int) (N * sizeof (complex)));
   fwrite (buf, sizeof (char), strlen (buf), res);
   fwrite ("\t\t", sizeof (char), 2, res);
   snprintf (buf, BUF_SZ, "%d", (int) (N * sizeof (float) * 2));
   fwrite (buf, sizeof (char), strlen (buf), res);
-  fwrite ("\to", sizeof (char), 2, res);
-  fwrite ("\n", sizeof (char), 1, res);
+  fputs ("\to", res);
+  fputc ('\t', res);
 }
 
 void
@@ -133,8 +140,9 @@ no_arg (struct timespec bf, struct timespec now, FILE * res)
   float *twiddles;
   complex *twiddles_c;
   char *mess[6] =
-    { "Temps execution :\n", "\tRenversement 2 :\t", "\tRenversement 4 :\t",
-"\tRADIX 2 :\t\t", "\tRADIX 4 :\t\t", "\tFFTW :\t\t\t" };
+    { "\nTemps execution :\n", "\tRenversement 2 :\t", "\tRenversement 4 :\t",
+    "\tRADIX 2 :\t\t", "\tRADIX 4 :\t\t", "\tFFTW :\t\t\t"
+  };
 
   for (N = 16; N <= MAX; N <<= 1)
     {
@@ -143,6 +151,7 @@ no_arg (struct timespec bf, struct timespec now, FILE * res)
       sig = calloc (N, sizeof (short) * (N));
       TF = (float *) calloc (N << 1, sizeof (float) * (N << 1));
       TF_c = (complex *) calloc (N, sizeof (fftw_complex) * (N));
+
       if (!sig || !twiddles || !TF || !cmp_add || !cmp_mul || !TF_c
 	  || !twiddles_c)
 	{
@@ -156,10 +165,10 @@ no_arg (struct timespec bf, struct timespec now, FILE * res)
       fwrite (*mess, sizeof (char), strlen (*mess), res);
       time = br_tst (rvs_16_rdx2, N, sig, &bf, &now);
 
-      fwrite (*(mess + 1), sizeof (char), strlen (*(mess + 1)), res);
+      fputs (*(mess + 1), res);
       print_time (res, time);
 
-      fwrite (*(mess + 3), sizeof (char), strlen (*(mess + 3)), res);
+      fputs (*(mess + 3), res);
       time =
 	fftf_tst (fftf_rdx2_tst, N, sig, TF, twiddles, &bf, &now, cmp_add,
 		  cmp_mul);
@@ -171,7 +180,7 @@ no_arg (struct timespec bf, struct timespec now, FILE * res)
 	  for (i = 0; i < N; i++)
 	    *(sig + i) = i;
 
-	  fwrite (*(mess + 2), sizeof (char), strlen (*(mess + 2)), res);
+	  fputs (*(mess + 2), res);
 	  time = br_tst (rvs_16_rdx4, N, sig, &bf, &now);
 	  print_time (res, time);
 	  fwrite (*(mess + 4), sizeof (char), strlen (*(mess + 4)), res);
@@ -206,20 +215,23 @@ no_arg (struct timespec bf, struct timespec now, FILE * res)
 int
 tst_one_tf (char *number, struct timespec bf, struct timespec now, FILE * res)
 {
-  char state = 0;
   int N, i;
   /* Tableau de complexes de taille N */
   float *TF;
   float time;
   /* Tableau du signal */
   short *sig;
-  unsigned int *cmp_mul = (unsigned int *) calloc (1, sizeof (unsigned int)),
-    *cmp_add = (unsigned int *) calloc (1, sizeof (unsigned int));
   /* Tableau des twiddles */
   float *twiddles;
+
+  char state = 0;
+
+  unsigned int *cmp_mul = (unsigned int *) calloc (1, sizeof (unsigned int)),
+    *cmp_add = (unsigned int *) calloc (1, sizeof (unsigned int));
   char *mess[6] =
     { "Temps execution :\n", "\tRenversement 2 :\t", "\tRenversement 4 :\t",
-"\tRADIX 2 :\t\t", "\tRADIX 4 :\t\t", "\tFFTW :\t\t\t" };
+    "\tRADIX 2 :\t\t", "\tRADIX 4 :\t\t", "\tFFTW :\t\t\t"
+  };
 
   N = (int) strtol (number, NULL, 10);
   N = 1 << (N);
@@ -276,10 +288,145 @@ tst_one_tf (char *number, struct timespec bf, struct timespec now, FILE * res)
   print_time (res, time);
 
   state = !state;
+
+// 
+
+
   free (TF);
   free (twiddles);
   free (sig);
   free (cmp_add);
   free (cmp_mul);
+  return 1;
+}
+
+
+/*!
+ * @function	init
+ * @abstract	Créé une fonction pour obtenir un fichier de signal formaté
+ * @param	argv2	le fichier de signal
+ * @result	result
+ */
+int
+init (char *argv2)
+{
+  int tmp;
+  char buf_c[BUF_SZ];
+  FILE *signal;
+  strcpy (buf_c, argv2);
+  if (strspn (buf_c, "0123456789") == strlen (buf_c))
+    {
+      tmp = (int) strtol (buf_c, NULL, 10);
+      if (tmp > MAX_POW)
+	{
+	  printf ("Taille maximum dépassée\n");
+	  return 0;
+	}
+      else
+	{
+	  signal = fopen ("signal.txt", "w");
+	  init_smp_rnd (signal, tmp, MAX_SMP_VAL);
+	}
+      fclose (signal);
+      return 1;
+    }
+  printf ("Saisissez une puissance de 2 en 2nd argument\n");
+  return 0;
+}
+
+FILE *signal, *tf;
+/*!
+ * @function    ml_compare
+ * @abstract    Compare les algorithmes avec les résultats de matlab stockés dans un fichier
+ * @param       sig_name chaîne du nom du fichier de signal     
+ * @param       ml_name_name chaîne du nom du fichier de fft matlab     
+ * @result      result
+ */
+int
+ml_compare (char *sig_name, char *ml_name)
+{
+  int N, i = 0, tmp;
+  char buf_c[BUF_SZ];
+  FILE *signal, *tf_f;
+  short *sig;
+  float tmp_f, *tf, *tf_ml, *twi;
+
+  signal = fopen (sig_name, "r");
+  strcpy (buf_c, ml_name);
+  tf_f = fopen (buf_c, "r");
+
+  while ((tmp = fgetc (signal)) != EOF)
+    {
+      if (tmp == '\n')
+	i++;
+    }
+  rewind (signal);
+
+  if (i & 1)
+    {
+      fclose (signal);
+      printf ("Le nombre de terme n'est pas pair ! ");
+      return 0;
+    }
+
+  N = i;
+
+  tf = (float *) calloc (N << 1, sizeof (float) * (N << 1));
+  tf_ml = (float *) calloc (N << 1, sizeof (float) * (N << 1));
+  twi = get_twiddles (N);
+  sig = (short *) malloc (sizeof (short) * (N));
+  if (!twi || !sig || !tf)
+    return 0;
+
+
+
+  for (i = 0; i < (N); i++)
+    fscanf (tf_f, "%f", tf_ml + i * 2);
+
+  for (i = 0; i < N; i++)
+    fscanf (tf_f, "%f", tf_ml + i * 2 + 1);
+
+  for (i = 0; i < N; i++)
+    fscanf (signal, "%hd", sig + i);
+
+  fclose (tf_f);
+
+  rvs_16_rdx2 (sig, N);
+  fftf_rdx2 (sig, tf, N, twi);
+
+  tmp_f = cmp_tf (tf, tf_ml, N);
+  if (tmp_f != 0)
+    printf ("Erreur moyenne Radix 2 %e\n", tmp_f);
+
+  rewind (signal);
+  for (i = 0; i < N; i++)
+    fscanf (signal, "%hd", sig + i);
+  tmp = N;
+
+  i = 0;
+  while (tmp >>= 1)
+    i++;
+  printf ("%d,i", i);
+
+  if (!(i & 0x1))
+    {
+      rvs_16_rdx4 (sig, N);
+      free (tf);
+      tf = (float *) calloc (N << 1, sizeof (float) * (N << 1));
+      fftf_rdx4 (sig, tf, N, twi);
+
+
+      tmp_f = cmp_tf (tf, tf_ml, N);
+
+      if (tmp_f != 0)
+	printf ("Erreur moyenne Radix 4 %e\n", tmp_f);
+
+    }
+  fclose (signal);
+
+  free (tf);
+  free (twi);
+  free (sig);
+
   return 1;
 }

@@ -10,19 +10,20 @@
 #include <complex.h>
 #include <time.h>
 #include "tst_func.h"
+#include "smp_tst.h"
 #include "string.h"
-#define MAX 1<<14
-#define INIT(a,b) (*a=0,*b=0)
-
+#define MAX_POW 14
+#define MAX 1<<MAX_POW
+#define MAX_SMP_VAL 1024
+#define BUF_SZ 64
 int
 main (int argc, char **argv)
 {
 
 
-
+  char buf_c[BUF_SZ];
   struct timespec now, bf;
-  FILE *signal, *tf_f, *results;
-
+  FILE *results;
   clock_gettime (CLOCK_REALTIME, &now);
 
 
@@ -37,6 +38,28 @@ main (int argc, char **argv)
 	{
 	  tst_one_tf (argv[1], bf, now, results);
 	}
+      else
+	{
+	  if (argc == 3)
+	    {
+
+	      strcpy (buf_c, argv[1]);
+	      if (!strcmp (buf_c, "init"))
+		{
+		  init (argv[2]);
+		}
+	      else
+		{
+		  ml_compare (argv[1], argv[2]);
+		}
+	    }
+	  else
+	    {
+
+	      printf ("Pas assez d'arguments!\n");
+	    }
+	}
+
     }
   fclose (results);
   return 0;
