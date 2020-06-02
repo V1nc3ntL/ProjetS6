@@ -16,27 +16,26 @@ FFT : radix 2 et 4
 #define ADC_DEF 1024
 
 
-#define SMP_N 1<<14 
+#define SMP_N 1<<6 
 
 int
 main (void)
 {
 
 
-  int i, N = SMP_N, b = N << 1;
-
 /* Tableau de complexes de taille N */
   float *TF;
+  struct timespec now, bf;
+  int i, N = SMP_N, b = N << 1;
+
 
   short *sig = calloc (N, sizeof (short) * (N));
-  TF = (float *) calloc (b, sizeof (float) * b);
   float *twiddles = get_twiddles (N);
 
 
 
-  struct timespec now, bf;
 
-
+  TF = (float *) calloc (b, sizeof (float) * b);
   if (!sig || !twiddles || !TF)
     {
       printf ("Pas assez de mémoire\n");
@@ -83,7 +82,8 @@ main (void)
   timespec_get (&bf, TIME_UTC);
 
   rvs_16_rdx4 (sig, N);
-
+  free(TF);
+  TF = (float *) calloc (b, sizeof (float) * b);
   fftf_rdx4 (sig, TF, N, twiddles);
 
   timespec_get (&now, TIME_UTC);
@@ -91,11 +91,10 @@ main (void)
   printf ("\n");
   printf ("\nRADIX 4\nTemps écoulé :\t %*lf ms\n", 4,
 	  (now.tv_nsec - bf.tv_nsec) / 1e3);
-  /*
 for(i = 0 ; i < N ; i++)	{
       printf ("%d R %+-2.2f\t\t", i, *(TF+i*2));
       printf ("%+-2.2f I\n", *(TF + i*2+ 1));
-}*/
+}
   free (TF);
   free (twiddles);
   free (sig);

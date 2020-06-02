@@ -1,0 +1,89 @@
+TF sur 16 termes
+			Signal	TF	TF complexe	Twiddles	
+Besoins mémoires :	32	128	256		128	o	
+Temps execution :
+	Renversement 2 :	+1.331e+00	 ms
+	RADIX 2 :		+4.342e+00	 ms
+	Renversement 4 :	+1.002e+00	 ms
+	RADIX 4 :		+2.793e+00	 ms
+	FFTW :			+1.175e+00	 ms
+TF sur 32 termes
+			Signal	TF	TF complexe	Twiddles	
+Besoins mémoires :	64	256	512		256	o	
+Temps execution :
+	Renversement 2 :	+3.650e+00	 ms
+	RADIX 2 :		+7.258e+00	 ms
+	FFTW :			+2.381e+00	 ms
+TF sur 64 termes
+			Signal	TF	TF complexe	Twiddles	
+Besoins mémoires :	128	512	1024		512	o	
+Temps execution :
+	Renversement 2 :	+5.646e+00	 ms
+	RADIX 2 :		+1.411e+01	 ms
+	Renversement 4 :	+2.785e+00	 ms
+	RADIX 4 :		+9.103e+00	 ms
+	FFTW :			+3.037e+00	 ms
+TF sur 128 termes
+			Signal	TF	TF complexe	Twiddles	
+Besoins mémoires :	256	1024	2048		1024	o	
+Temps execution :
+	Renversement 2 :	+1.192e+01	 ms
+	RADIX 2 :		+3.103e+01	 ms
+	FFTW :			+4.214e+00	 ms
+TF sur 256 termes
+			Signal	TF	TF complexe	Twiddles	
+Besoins mémoires :	512	2048	4096		2048	o	
+Temps execution :
+	Renversement 2 :	+7.088e+00	 ms
+	RADIX 2 :		+8.005e+01	 ms
+	Renversement 4 :	+8.417e+00	 ms
+	RADIX 4 :		+4.124e+01	 ms
+	FFTW :			+1.011e+01	 ms
+TF sur 512 termes
+			Signal	TF	TF complexe	Twiddles	
+Besoins mémoires :	1024	4096	8192		4096	o	
+Temps execution :
+	Renversement 2 :	+5.479e+01	 ms
+	RADIX 2 :		+1.632e+02	 ms
+	FFTW :			+2.602e+01	 ms
+TF sur 1024 termes
+			Signal	TF	TF complexe	Twiddles	
+Besoins mémoires :	2048	8192	16384		8192	o	
+Temps execution :
+	Renversement 2 :	+4.169e+01	 ms
+	RADIX 2 :		+1.220e+02	 ms
+	Renversement 4 :	+9.270e+00	 ms
+	RADIX 4 :		+7.001e+01	 ms
+	FFTW :			+1.774e+01	 ms
+TF sur 2048 termes
+			Signal	TF	TF complexe	Twiddles	
+Besoins mémoires :	4096	16384	32768		16384	o	
+Temps execution :
+	Renversement 2 :	+8.827e+01	 ms
+	RADIX 2 :		+2.518e+02	 ms
+	FFTW :			+3.491e+01	 ms
+TF sur 4096 termes
+			Signal	TF	TF complexe	Twiddles	
+Besoins mémoires :	8192	32768	65536		32768	o	
+Temps execution :
+	Renversement 2 :	+3.946e+01	 ms
+	RADIX 2 :		+5.168e+02	 ms
+	Renversement 4 :	+3.109e+01	 ms
+	RADIX 4 :		+3.244e+02	 ms
+	FFTW :			+1.136e+02	 ms
+TF sur 8192 termes
+			Signal	TF	TF complexe	Twiddles	
+Besoins mémoires :	16384	65536	131072		65536	o	
+Temps execution :
+	Renversement 2 :	+3.783e+02	 ms
+	RADIX 2 :		+1.089e+03	 ms
+	FFTW :			+2.553e+02	 ms
+TF sur 16384 termes
+			Signal	TF	TF complexe	Twiddles	
+Besoins mémoires :	32768	131072	262144		131072	o	
+Temps execution :
+	Renversement 2 :	+8.304e+02	 ms
+	RADIX 2 :		+2.363e+03	 ms
+	Renversement 4 :	+1.098e+02	 ms
+	RADIX 4 :		+1.461e+03	 ms
+	FFTW :			+4.036e+02	 ms

@@ -15,10 +15,6 @@
 #define W_1_4I(n) (I(n)-RE(n,1)-IM(n,2)+RE(n,3))
 #define W_2_4R(n) (RE(n,0)-RE(n,1)+RE(n,2)-RE(n,3))
 #define W_2_4I(n) (IM(n,0)-IM(n,1)+IM(n,2)-IM(n,3))
-#define W_3_4R(n) (RE(n,0)-IM(n,1)-RE(n,2)+IM(n,3))
-#define W_3_4I(n) (IM(n,0)+RE(n,1)-IM(n,2)-RE(n,3))
-
-
 
 void
 fftf_rdx2 (short *sig, float *TF, int N, float *twiddles)
@@ -106,14 +102,14 @@ lg4--;
 	//W0
 	*TF =(float) *(sig ) + *(sig +  1) + *(sig +  2) + *(sig +  3);
 	//W1
-      	RE (TF, 1) = (float)*(sig ) - *(sig  + 2);
-      	IM (TF, 1) = (float)*(sig  + 3) - *(sig  + 1);
+      	RE (TF, 1) = *(sig ) - *(sig  + 2);
+      	IM (TF, 1) = *(sig  + 3) - *(sig  + 1);
 	//W2
-      	RE (TF, 2) =(float)
+      	RE (TF, 2) =
 	*(sig ) - *(sig +  1) + *(sig  + 2) - *(sig  + 3);
 	//W3
-      	RE (TF, 3) = (float)RE (TF, 1);
-      	IM (TF, 3) = (float)*(sig +  1) - *(sig + 3);
+      	RE (TF, 3) = RE (TF, 1);
+      	IM (TF, 3) = *(sig +  1) - *(sig + 3);
 //FFT 4
   for (i = 4; i < N; i += 4)
     {
@@ -130,7 +126,6 @@ lg4--;
       RE (*pos, 3) = RE (*pos, 1);
       IM (*pos, 3) = *(sig + i + 1) - *(sig + i + 3);
     }
-
 
 //FFT(4^(lvl+1)) 
   for (tmp_N = 16, lvl = 1; lvl < lg4; lvl++, tmp_N <<= 2)
@@ -158,7 +153,7 @@ lg4--;
 	      //X(0) 
 	      **pos = W_0_4R (bf);
 	      I (*pos) = W_0_4I (bf);
-      //X(N/4)
+      	      //X(N/4)
 	      *pos[1] = W_1_4R (bf);
 	      I (pos[1]) = W_1_4I (bf);
 
