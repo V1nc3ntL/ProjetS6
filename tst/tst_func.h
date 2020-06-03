@@ -40,5 +40,5 @@ int tst_one_tf (char *number, struct timespec bf, struct timespec now,
 		FILE * res);
 
 int init (char *argv2);
-int ml_compare (char *sig_name, char *ml_name);
+int ml_compare (char *sig_name, char *ml_name,FILE* res,struct timespec bf, struct timespec now);
 #endif

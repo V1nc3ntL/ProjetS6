@@ -143,13 +143,13 @@ fftf_rdx2_tst (short *sig, float *TF, int N, float *twiddles,
 
 	  I (base) = I (base) + tmp_i;
 	  *(base) = *(base) + tmp_r;
-	  *cmp_add += 2;
+//	  *cmp_add += 2;
 
 	  for (btf = 1; btf < tmp_N; btf++)
 	    {
 	      //W btf 
 	      twid = twiddles + k * btf;
-	      *cmp_mul += 1;
+//	      *cmp_mul += 1;
 
 	      tmp_r = RE (mid, btf) * *(twid) - IM (mid, btf) * I (twid);
 	      tmp_i = RE (mid, btf) * I (twid) + IM (mid, btf) ** (twid);
@@ -159,7 +159,7 @@ fftf_rdx2_tst (short *sig, float *TF, int N, float *twiddles,
 
 	      RE (base, btf) = RE (base, btf) + tmp_r;
 	      IM (base, btf) = IM (base, btf) + tmp_i;
-	      *cmp_add += 2;
+//	      *cmp_add += 2;
 
 	      twid += k;
 	    }
@@ -246,7 +246,7 @@ fftf_rdx4_tst (short *sig, float *TF, int N, float *twiddles,
 	  //X(N/2)ne peut être obtenu par symétrie
 	  *pos[2] = W_2_4R (bf);
 	  I (pos[2]) = W_2_4I (bf);
-	  *cmp_add += 12;
+// 		*cmp_add += 12;
 
 	  for (btf = 1; btf < tmp_N >> 1; btf++)
 	    {
@@ -265,7 +265,7 @@ fftf_rdx4_tst (short *sig, float *TF, int N, float *twiddles,
 		  //W (i * btf) * N i/4
 		  RE (bf, i) = *pos[i] * *(twid) - I (pos[i]) * I (twid);
 		  IM (bf, i) = *pos[i] * I (twid) + I (pos[i]) ** (twid);
-		  *cmp_mul += 1;
+//		  *cmp_mul += 1;
 		}
 	      //X(4k) 
 	      *pos[0] = W_0_4R (bf);
@@ -273,7 +273,7 @@ fftf_rdx4_tst (short *sig, float *TF, int N, float *twiddles,
 	      //X(4k+1) 
 	      *pos[1] = W_1_4R (bf);
 	      I (pos[1]) = W_1_4I (bf);
-	      *cmp_add += 8;
+//	      *cmp_add += 8;
 	    }
 	  //Les DFTS réelles sont symétriques
 	  *pos = TF + (j * 2) + (tmp_N << 1);

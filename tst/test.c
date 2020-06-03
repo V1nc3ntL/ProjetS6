@@ -50,7 +50,7 @@ main (int argc, char **argv)
 		}
 	      else
 		{
-		  ml_compare (argv[1], argv[2]);
+		  ml_compare (argv[1], argv[2],results,bf,now);
 		}
 	    }
 	  else

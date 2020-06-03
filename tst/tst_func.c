@@ -85,9 +85,44 @@ fftw_tst (int N, short *sig, float *TF, struct timespec *bf,
   fftw_free (p);
   return (now->tv_nsec - bf->tv_nsec) / 1e3;
 }
-
 void
 write_a_tf (int N, FILE * res)
+{
+  char buf[BUF_SZ];
+  int tmp_N;
+  char *mess[2] = { "TF sur ",
+    " termes\n\t\t\tSignal\tTF\tTwiddles\t\nBesoins mémoires :\t"
+  };  
+  fputs (*mess, res);
+  if (N > (1<<13) ){
+	tmp_N = (N>>10);
+  }else{
+      tmp_N = N;
+  }
+
+
+  snprintf (buf, BUF_SZ, "%d", N); 
+  fwrite (buf, sizeof (char), strlen (buf), res);
+  fputs (*(mess + 1), res);
+  snprintf (buf, BUF_SZ, "%d", (int) (tmp_N * sizeof (short)));
+  fwrite (buf, sizeof (char), strlen (buf), res);
+  fputc ('\t', res);
+
+  snprintf (buf, BUF_SZ, "%d", (int) (tmp_N * sizeof (float) * 2));
+  fwrite (buf, sizeof (char), strlen (buf), res);
+  fwrite ("\t\t", sizeof (char), 2, res);
+  snprintf (buf, BUF_SZ, "%d", (int) (tmp_N * sizeof (float) * 2));
+  fwrite (buf, sizeof (char), strlen (buf), res);
+  fputc ('\t', res);
+  if (N > (1<<13) ){
+  fputc('k', res);
+  }
+
+  fputc('o', res);
+}
+
+void
+write_a_tf_cmp (int N, FILE * res)
 {
   char buf[BUF_SZ];
   char *mess[2] = { "TF sur ",
@@ -96,7 +131,6 @@ write_a_tf (int N, FILE * res)
   fputs (*mess, res);
   snprintf (buf, BUF_SZ, "%d", N);
   fwrite (buf, sizeof (char), strlen (buf), res);
-
   fputs (*(mess + 1), res);
   snprintf (buf, BUF_SZ, "%d", (int) (N * sizeof (short)));
   fwrite (buf, sizeof (char), strlen (buf), res);
@@ -252,10 +286,10 @@ tst_one_tf (char *number, struct timespec bf, struct timespec now, FILE * res)
   fwrite (*mess, sizeof (char), strlen (*mess), res);
   time = br_tst (rvs_16_rdx2, N, sig, &bf, &now);
 
-  fwrite (*(mess + 1), sizeof (char), strlen (*(mess + 1)), res);
+  fputs (*(mess + 1), res);
   print_time (res, time);
 
-  fwrite (*(mess + 3), sizeof (char), strlen (*(mess + 3)), res);
+  fputs (*(mess + 3), res);
   time = fftf_tst (fftf_rdx2_tst, N, sig, TF, twiddles, &bf, &now, cmp_add,
 		   cmp_mul);
   print_time (res, time);
@@ -267,10 +301,10 @@ tst_one_tf (char *number, struct timespec bf, struct timespec now, FILE * res)
       for (i = 0; i < N; i++)
 	*(sig + i) = i;
 
-      fwrite (*(mess + 2), sizeof (char), strlen (*(mess + 2)), res);
+      fputs (*(mess + 2), res);
       time = br_tst (rvs_16_rdx4, N, sig, &bf, &now);
       print_time (res, time);
-      fwrite (*(mess + 4), sizeof (char), strlen (*(mess + 4)), res);
+      fputs (*(mess + 4), res);
 
       time = fftf_tst (fftf_rdx4_tst, N, sig, TF, twiddles, &bf, &now,
 		       cmp_add, cmp_mul);
@@ -334,7 +368,6 @@ init (char *argv2)
   return 0;
 }
 
-FILE *signal, *tf;
 /*!
  * @function    ml_compare
  * @abstract    Compare les algorithmes avec les résultats de matlab stockés dans un fichier
@@ -343,14 +376,18 @@ FILE *signal, *tf;
  * @result      result
  */
 int
-ml_compare (char *sig_name, char *ml_name)
+ml_compare (char *sig_name, char *ml_name,FILE* res,struct timespec bf, struct timespec now)
 {
   int N, i = 0, tmp;
   char buf_c[BUF_SZ];
   FILE *signal, *tf_f;
   short *sig;
-  float tmp_f, *tf, *tf_ml, *twi;
+  float time,tmp_f, *tf, *tf_ml, *twi;
 
+  char *mess[6] =
+    { "\nTemps execution :\n", "\tRenversement 2 :\t", "\tRenversement 4 :\t",
+    "\tRADIX 2 :\t\t", "\tRADIX 4 :\t\t"
+  };
   signal = fopen (sig_name, "r");
   strcpy (buf_c, ml_name);
   tf_f = fopen (buf_c, "r");
@@ -371,13 +408,16 @@ ml_compare (char *sig_name, char *ml_name)
 
   N = i;
 
+   write_a_tf ( N,res);
+
+
   tf = (float *) calloc (N << 1, sizeof (float) * (N << 1));
   tf_ml = (float *) calloc (N << 1, sizeof (float) * (N << 1));
   twi = get_twiddles (N);
   sig = (short *) malloc (sizeof (short) * (N));
-  if (!twi || !sig || !tf)
-    return 0;
 
+  if (!tf_ml||!tf||!twi || !sig || !tf)
+    return 0;
 
 
   for (i = 0; i < (N); i++)
@@ -386,17 +426,26 @@ ml_compare (char *sig_name, char *ml_name)
   for (i = 0; i < N; i++)
     fscanf (tf_f, "%f", tf_ml + i * 2 + 1);
 
+
+  fclose (tf_f);
   for (i = 0; i < N; i++)
     fscanf (signal, "%hd", sig + i);
 
-  fclose (tf_f);
 
-  rvs_16_rdx2 (sig, N);
-  fftf_rdx2 (sig, tf, N, twi);
+  fputs (*(mess ), res);
+  fputs (*(mess + 1), res);
+  time = br_tst (rvs_16_rdx2,  N, sig, &bf,&now);
+      print_time(res,time);
+
+  time = fftf_tst (fftf_rdx2_tst,  N, sig,tf,twi,&bf,&now,0,0);
+  fputs (*(mess + 3), res);
+      print_time(res,time);
+
 
   tmp_f = cmp_tf (tf, tf_ml, N);
+
   if (tmp_f != 0)
-    printf ("Erreur moyenne Radix 2 %e\n", tmp_f);
+    fprintf (res,"\tErreur Radix 2:\t\t%e\n\n", tmp_f);
 
   rewind (signal);
   for (i = 0; i < N; i++)
@@ -409,16 +458,22 @@ ml_compare (char *sig_name, char *ml_name)
 
   if (!(i & 0x1))
     {
-      rvs_16_rdx4 (sig, N);
+      fputs (*(mess + 2), res);
+      time = br_tst (rvs_16_rdx4,  N, sig, &bf,&now);
+      print_time(res,time);
       free (tf);
       tf = (float *) calloc (N << 1, sizeof (float) * (N << 1));
-      fftf_rdx4 (sig, tf, N, twi);
+      if(!tf)
+	  return 0;
 
+      time = fftf_tst (fftf_rdx4_tst,  N, sig,tf,twi,&bf,&now,0,0);
+      fputs (*(mess + 4), res);
+      print_time(res,time);
 
       tmp_f = cmp_tf (tf, tf_ml, N);
 
       if (tmp_f != 0)
-	printf ("Erreur moyenne Radix 4 %e\n", tmp_f);
+	fprintf (res,"\tErreur Radix 4:\t\t%e\n\n", tmp_f);
 
     }
   fclose (signal);
